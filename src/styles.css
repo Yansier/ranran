@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=Montserrat:wght@500;600&family=Noto+Sans+SC:wght@400;500&display=swap');
+
+:root {
+  font-family: 'Montserrat', 'Noto Sans SC', system-ui, sans-serif;
+  color: #334646;
+  background: #b8dbd8;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+html, body, #app, #scene-container { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body { overscroll-behavior: none; }
+button { font: inherit; }
+#app { position: relative; isolation: isolate; background: linear-gradient(#b8d9dc, #f7dcc9); }
+#scene-container, #scene-container canvas { position: absolute; inset: 0; display: block; touch-action: none; }
+
+.hero-title {
+  position: absolute;
+  top: clamp(30px, 6vh, 76px);
+  left: clamp(24px, 6vw, 96px);
+  max-width: 390px;
+  z-index: 2;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 6px rgba(255,255,255,.35));
+}
+
+.eyebrow { font-size: 9px; letter-spacing: .25em; color: #637d7a; font-weight: 600; margin-bottom: 15px; }
+.eyebrow span { display: inline-block; width: 24px; height: 1px; background: #d78496; vertical-align: middle; margin-right: 9px; }
+.hero-title h1 { margin: 0; font-size: clamp(34px, 4.2vw, 66px); line-height: .82; letter-spacing: -.045em; font-weight: 600; color: #fffdf8; text-shadow: 0 2px 18px rgba(88,112,105,.16); }
+.hero-title h1 em { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; color: #ef9ead; letter-spacing: -.02em; }
+.hero-title p { margin: 18px 0 0 3px; font: 400 12px/1.5 'Noto Sans SC', sans-serif; letter-spacing: .28em; color: rgba(55,78,76,.76); }
+
+.character-note { position: absolute; z-index: 2; right: clamp(22px, 5vw, 74px); top: 50%; display: flex; align-items: center; gap: 13px; color: rgba(255,255,255,.92); text-shadow: 0 1px 8px rgba(61,83,78,.2); pointer-events: none; }
+.character-note::before { content: ''; position: absolute; right: calc(100% + 14px); width: 52px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.85)); }
+.note-index { display: grid; place-items: center; width: 31px; height: 31px; border: 1px solid rgba(255,255,255,.65); border-radius: 50%; font: 600 9px/1 Montserrat; }
+.character-note strong, .character-note small { display: block; }
+.character-note strong { font-size: 10px; letter-spacing: .2em; }
+.character-note small { margin-top: 5px; font: 400 10px 'Noto Sans SC'; letter-spacing: .12em; opacity: .84; }
+
+.scene-controls { position: absolute; z-index: 3; left: clamp(20px, 5vw, 72px); bottom: clamp(22px, 6vh, 64px); display: flex; align-items: center; gap: 8px; padding: 7px; border: 1px solid rgba(255,255,255,.6); border-radius: 999px; background: rgba(248,249,244,.32); box-shadow: 0 10px 36px rgba(63,92,82,.1); backdrop-filter: blur(14px); }
+.scene-controls button { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border: 0; border-radius: 999px; color: #58716e; background: transparent; cursor: pointer; transition: .25s ease; }
+.scene-controls button:hover, .scene-controls button.active { color: #fff; background: rgba(222,132,152,.76); box-shadow: 0 5px 16px rgba(191,101,122,.22); }
+.scene-controls svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.scene-controls span { font: 500 10px 'Noto Sans SC'; letter-spacing: .08em; white-space: nowrap; }
+
+.interaction-hint { position: absolute; left: 50%; bottom: clamp(25px, 6vh, 64px); transform: translateX(-50%); z-index: 2; display: flex; align-items: center; gap: 10px; color: rgba(55,80,75,.65); font: 500 9px Montserrat, 'Noto Sans SC'; letter-spacing: .16em; pointer-events: none; }
+.mouse-icon { display: block; width: 17px; height: 25px; border: 1px solid rgba(55,80,75,.48); border-radius: 10px; position: relative; }
+.mouse-icon i { position: absolute; top: 5px; left: 7px; width: 2px; height: 5px; border-radius: 2px; background: rgba(55,80,75,.55); animation: wheel 1.6s ease-in-out infinite; }
+@keyframes wheel { 0%,100% { transform: translateY(0); opacity: .3; } 50% { transform: translateY(5px); opacity: 1; } }
+
+.phase-badge { position: absolute; right: clamp(22px, 5vw, 72px); bottom: clamp(22px, 6vh, 62px); z-index: 2; text-align: right; pointer-events: none; color: rgba(255,255,255,.82); }
+.phase-badge b { display: block; font-size: 7px; letter-spacing: .36em; font-weight: 600; }
+.phase-badge span { display: block; font: italic 600 34px/1 'Cormorant Garamond', serif; }
+
+#loading-screen { position: absolute; inset: 0; z-index: 10; display: grid; place-content: center; justify-items: center; gap: 18px; background: linear-gradient(155deg, #badbd9, #f6d9d0); transition: opacity .8s ease, visibility .8s; }
+#loading-screen.hidden { opacity: 0; visibility: hidden; }
+#loading-screen p { margin: 0; color: #6c8581; font: 500 10px 'Noto Sans SC'; letter-spacing: .22em; }
+.loader-flower { width: 48px; height: 48px; position: relative; animation: flowerSpin 4s linear infinite; }
+.loader-flower i { position: absolute; left: 19px; top: 2px; width: 10px; height: 21px; border-radius: 60% 60% 45% 45%; transform-origin: 5px 22px; background: rgba(255,255,255,.8); }
+.loader-flower i:nth-child(2) { transform: rotate(90deg); }.loader-flower i:nth-child(3) { transform: rotate(180deg); }.loader-flower i:nth-child(4) { transform: rotate(270deg); }
+.loader-flower span { position: absolute; inset: 18px; border-radius: 50%; background: #e9a2ad; }
+@keyframes flowerSpin { to { transform: rotate(360deg); } }
+
+@media (max-width: 720px) {
+  .hero-title { top: 25px; left: 22px; }
+  .hero-title h1 { font-size: 38px; }
+  .hero-title p { margin-top: 13px; font-size: 10px; }
+  .character-note { top: 55%; right: 16px; }
+  .character-note::before { width: 25px; }
+  .scene-controls { left: 50%; transform: translateX(-50%); bottom: 18px; }
+  .scene-controls button { padding: 0 11px; }
+  .scene-controls button span, .interaction-hint, .phase-badge { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mouse-icon i, .loader-flower { animation: none; }
+}
