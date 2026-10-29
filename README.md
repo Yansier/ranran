@@ -2,7 +2,7 @@
 
 一个以虚拟偶像「嘉然」为主角的浏览器 3D 童话草原。项目采用动漫风格的柔和 Toon Shading，让嘉然在花草与遗迹之间追逐一只发光的魔法蝴蝶。
 
-当前版本为 **Phase 1.5 — First Look**。角色与环境均为真正的 Three.js 三维几何体，可使用鼠标或触摸从任意方向观察。
+当前版本为 **Phase 2A — Becoming Ranran**。角色与环境均为真正的 Three.js 三维几何体，可使用鼠标或触摸从任意方向观察。Phase 2A 将角色从约 4–4.5 头身升级为浏览器实测约 **5.23 头身**，并重做了面部与头发结构。
 
 ## 技术栈
 
@@ -59,9 +59,9 @@ npm run qa:screenshots
 
 ```text
 .
-├─ artifacts/screenshots/        # Phase 1.5 验收截图
+├─ artifacts/screenshots/        # Phase 2A 当前截图与 Phase 1.5 基线
 ├─ scripts/
-│  └─ capture-screenshots.mjs    # Playwright 五视图截图脚本
+│  └─ capture-screenshots.mjs    # Playwright 六视图截图与比例测量
 ├─ src/
 │  ├─ character/
 │  │  ├─ createRanran.js         # 嘉然模型、姿态、服装与 GLB 入口
@@ -88,9 +88,10 @@ npm run qa:screenshots
 
 嘉然由独立的 `createProceduralRanran()` 工厂创建，场景只依赖它返回的 `THREE.Group`：
 
-- 头部、身体和鞋子采用平滑椭球与胶囊几何体；
-- 头发使用沿 Catmull-Rom 曲线生成的渐细截面网格，不是二维贴片；
-- 面部眼睛、虹膜、鼻子与嘴巴均有独立的三维结构；
+- 面部采用自定义封闭 `BufferGeometry`，沿高度分别控制额头、脸颊、下颌和下巴宽度，不再是简单缩放球体；
+- 眼睛使用贴合弯曲平面的 `CanvasTexture`，包含眼白、蓝色渐变虹膜、瞳孔、双高光和上眼睑，避免独立眼球突出；
+- 头发采用前短后长的非对称头皮曲面，配合沿 Catmull-Rom 曲线生成的分组刘海、侧发与五组重叠后发片；
+- 躯干、四肢和鞋子采用平滑椭球、胶囊及渐细曲线几何，比例分别调整而非整体拉伸；
 - 上衣、背带短裤、交叉系带、蝴蝶结、袜子、运动鞋、背包和心形腰包分层建模；
 - 手臂与腿沿多点曲线生成，以维持追逐蝴蝶的前倾动作；
 - 材质使用柔和的 `MeshToonMaterial` 色阶贴图。
@@ -115,5 +116,7 @@ npm run build
 npm run qa:screenshots
 ```
 
-验收镜头通过开发 API `window.__RANRAN_MEADOW__.setCameraPreset()` 固定，截图前会关闭自动巡游，保证多次运行结果稳定。
+验收镜头通过开发 API `window.__RANRAN_MEADOW__.setCameraPreset()` 固定，截图前会关闭自动巡游，保证多次运行结果稳定。`measureCharacter()` 会在 QA 中输出模型高度、头部高度和实测头身比例。
+
+当前截图保存在 `artifacts/screenshots/`，其中包含额外的 `character-face-closeup.png`。Phase 1.5 的原始五张截图保存在 `artifacts/screenshots/baseline-phase1.5/`，不会被 QA 脚本覆盖。
 

@@ -42,11 +42,12 @@ function syncRotateButton() {
 
 function setCameraPreset(name = 'hero') {
   const presets = {
-    hero: { position: [6.2, 4.4, 8.1], target: [0, 1.95, 0.1] },
-    front: { position: [0, 2.4, 8.25], target: [0, 1.95, 0.05] },
-    side: { position: [8.25, 2.4, 0], target: [0, 1.95, 0.05] },
-    back: { position: [0, 2.4, -8.25], target: [0, 1.95, -0.05] },
-    mobile: { position: [3.8, 4.35, 9.7], target: [-0.28, 2.0, 0.08] }
+    hero: { position: [6.8, 5.2, 9.0], target: [0, 2.45, 0.1] },
+    front: { position: [0, 2.8, 9.4], target: [0, 2.4, 0.05] },
+    side: { position: [8.9, 2.8, 3.15], target: [0, 2.4, 0.05] },
+    back: { position: [0, 2.8, -9.4], target: [0, 2.4, -0.05] },
+    face: { position: [0, 4.05, 3.7], target: [-0.04, 4.0, 0.12] },
+    mobile: { position: [4.4, 5.25, 10.8], target: [-0.25, 2.45, 0.08] }
   };
   const preset = presets[name] || presets.hero;
   controls.autoRotate = false;
@@ -54,6 +55,18 @@ function setCameraPreset(name = 'hero') {
   controls.target.fromArray(preset.target);
   controls.update();
   syncRotateButton();
+}
+
+function measureCharacter() {
+  ranran.updateWorldMatrix(true, true);
+  const face = ranran.getObjectByName('Ranran_FaceVolume');
+  const characterSize = new THREE.Box3().setFromObject(ranran).getSize(new THREE.Vector3());
+  const faceSize = new THREE.Box3().setFromObject(face).getSize(new THREE.Vector3());
+  return {
+    height: characterSize.y,
+    headHeight: faceSize.y,
+    headRatio: characterSize.y / faceSize.y
+  };
 }
 
 resetButton.addEventListener('click', resetCamera);
@@ -80,4 +93,4 @@ requestAnimationFrame(() => {
 });
 
 // Exposed only for development inspection; no objects are allocated in the render loop.
-window.__RANRAN_MEADOW__ = { scene, camera, renderer, controls, ranran, butterfly, fireflies, setCameraPreset };
+window.__RANRAN_MEADOW__ = { scene, camera, renderer, controls, ranran, butterfly, fireflies, setCameraPreset, measureCharacter };

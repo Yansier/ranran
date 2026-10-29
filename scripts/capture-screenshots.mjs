@@ -47,7 +47,9 @@ async function openScene(page, preset, qaMode = false) {
   await page.waitForSelector('#loading-screen.hidden');
   await page.evaluate(({ presetName, characterMode }) => {
     document.body.dataset.qa = characterMode ? 'character' : '';
+    document.querySelector('#loading-screen').style.display = 'none';
     window.__RANRAN_MEADOW__.setCameraPreset(presetName);
+    if (presetName === 'face') window.__RANRAN_MEADOW__.butterfly.visible = false;
   }, { presetName: preset, characterMode: qaMode });
   await page.waitForTimeout(1_050);
 }
@@ -76,6 +78,7 @@ try {
   await capture(character, 'character-front.png', 'front', true);
   await capture(character, 'character-side.png', 'side', true);
   await capture(character, 'character-back.png', 'back', true);
+  await capture(character, 'character-face-closeup.png', 'face', true);
   await character.close();
 
   const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
@@ -89,6 +92,12 @@ try {
   if (autoRotate) throw new Error('prefers-reduced-motion did not disable camera auto-rotation.');
   await reduced.close();
   console.log('verified prefers-reduced-motion');
+
+  const metricsPage = await browser.newPage({ viewport: { width: 800, height: 600 } });
+  await openScene(metricsPage, 'front', true);
+  const metrics = await metricsPage.evaluate(() => window.__RANRAN_MEADOW__.measureCharacter());
+  await metricsPage.close();
+  console.log(`character metrics height=${metrics.height.toFixed(3)} head=${metrics.headHeight.toFixed(3)} ratio=${metrics.headRatio.toFixed(2)}`);
 
   if (browserErrors.length) {
     throw new Error(`Browser errors detected:\n${[...new Set(browserErrors)].join('\n')}`);

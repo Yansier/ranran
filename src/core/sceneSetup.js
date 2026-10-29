@@ -7,8 +7,8 @@ export function createSceneSystem(container) {
   scene.fog = new THREE.FogExp2(0xc9dfd7, 0.033);
 
   const camera = new THREE.PerspectiveCamera(34, container.clientWidth / container.clientHeight, 0.1, 80);
-  const homePosition = new THREE.Vector3(6.2, 4.4, 8.1);
-  const homeTarget = new THREE.Vector3(0, 1.95, 0.15);
+  const homePosition = new THREE.Vector3(6.8, 5.2, 9.0);
+  const homeTarget = new THREE.Vector3(0, 2.45, 0.15);
   camera.position.copy(homePosition);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
