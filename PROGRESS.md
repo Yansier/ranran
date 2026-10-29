@@ -87,3 +87,54 @@ Phase 1.5 对照图位于 `artifacts/screenshots/baseline-phase1.5/`。
 
 Phase 2A 证明程序化方案足以改善头身比例、脸型和整体发型，因此当前无需强制迁移。若下一阶段重点是自然手型、关节变形、骨骼动画或更高质量侧脸，则 Blender GLB 将比继续堆叠程序化几何更有效。
 
+## Phase 2B.1 — The Real Ranran
+
+验收日期：2026-10-29
+
+### 资产与 Blender 导入
+
+- 找到真实模型：`assets-local/character-source/jiaran-mmd/jiaranassets02/jiaran/嘉然/JiaRan.pmx`。
+- 模型包包含 PMX、`data/`、`spa/`、规则文本和预览图；共读取 19 张 Blender 图像，实际缺失纹理为 0。
+- 使用 Blender 5.2.3 LTS 与 MMD Tools 4.5.14 后台导入成功。
+- 实际角色主体为 1 个网格对象：146,387 顶点、264,714 面、17 个角色材质槽；另有 394 个刚体辅助网格与 699 个关节辅助对象。
+- 导入得到 1 个 Armature、583 根骨骼、31 个 Shape Key（不含 Basis），以及 28 个顶点 Morph、1 个材质 Morph、1 个组 Morph。
+- 原始比例包围盒约为 `0.818 × 0.384 × 1.269 m`（宽 × 深 × 高）。
+- 独立工作副本已保存到 `assets-local/character-working/jiaran-original-import.blend`，原始 PMX 未修改。
+
+### Blender 外观验收
+
+- 已真实渲染正面、背面、左右侧与面部特写到 `artifacts/local-model-qa/blender/`。
+- 面部、蓝色眼睛、呆毛、分层长发、后脑蝴蝶结、手指和鞋袜完整，没有紫色缺材质或部件消失。
+- 角色为站立 A/T 形预览姿势；本阶段未强制套用程序化角色的追逐动作。
+- 当前服装是 MMD 包自带的粉白日常裙装，与项目 `ranran.png` 的粉色上衣和黑色背带短裤不同；依照本阶段要求未擅自重制服装。
+
+### GLB 转换
+
+- 已生成私有工作副本 `assets-local/character-working/jiaran-gltf-prep.blend`。
+- 初次直接导出发现 MMD Tools Shader Node Group 在 glTF 中变成灰褐单色；实际截图确认后，没有修改几何，而是在派生副本中把 17 个材质重连为 Principled BSDF + 原始主纹理。
+- 最终 GLB：`assets-local/character-export/jiaran-test.glb`，29,817,888 字节（约 28.4 MiB）。
+- GLB 保留 SkinnedMesh、骨骼层级和 31 个 Morph Target；MMD 刚体、关节与专有物理效果未导出。
+- 模型没有内含动画片段；当前是原始站立姿势。
+
+### Three.js 接入与浏览器验收
+
+- 新增 `createCharacterManager()`，支持 `procedural` 与 `local-glb` 两种模式。
+- 本地 GLB 使用 File API + Object URL 读取，不上传、不复制到 `public/`；只有解析成功才替换当前角色，失败会保留程序化模型。
+- 自动按包围盒做统一缩放、水平居中和脚底落地，保持模型原本身体比例；当前场景高度为 4.7 单位。
+- 实际浏览器读取到 17 个 SkinnedMesh、535 个可见骨骼节点、31 个 Morph Target、17 个材质，且没有动画片段。
+- 已生成 Three.js 正面、严格侧面、背面、面部、桌面草原和移动端截图到 `artifacts/local-model-qa/threejs/`。
+- 材质修正后，蓝眼、粉白服装、长发和透明部件显示正常；脚底落地、阴影与镜头正常，浏览器控制台错误为 0。
+- 移动端角色完整，标题与底部控件没有遮挡面部。
+
+### 版权与仓库隔离
+
+- `.gitignore` 排除整个 `assets-local/` 与 `artifacts/local-model-qa/`。
+- `git check-ignore` 已确认 PMX 派生 GLB 和本地模型截图被忽略；`git ls-files` 未发现这些目录中的受限资产。
+- 公开构建中不包含 PMX、原始纹理、BLEND、GLB 或本地模型截图。
+
+### 下一阶段建议
+
+1. **制作静态玩耍姿势**：可以开始在私有 Blender 工作副本中摆出追逐蝴蝶的姿势；先验证裙摆、袖口和长发在关节旋转后的穿模情况。
+2. **继续材质适配**：目前 Principled 转换已经正确显示主纹理，但尚未复刻 MMD Toon、描边、Sphere Map 与物理毛发效果，可在 Three.js 中做轻量 Toon/轮廓方案。
+3. **先确认服装方向**：MMD 日常裙装与原三视图差异明显。任何服装替换、配件拆分或重制都必须先确认模型规则和授权边界，不应在当前受限资产上直接开展公开发布版本。
+

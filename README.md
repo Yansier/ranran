@@ -2,7 +2,9 @@
 
 一个以虚拟偶像「嘉然」为主角的浏览器 3D 童话草原。项目采用动漫风格的柔和 Toon Shading，让嘉然在花草与遗迹之间追逐一只发光的魔法蝴蝶。
 
-当前版本为 **Phase 2A — Becoming Ranran**。角色与环境均为真正的 Three.js 三维几何体，可使用鼠标或触摸从任意方向观察。Phase 2A 将角色从约 4–4.5 头身升级为浏览器实测约 **5.23 头身**，并重做了面部与头发结构。
+当前版本为 **Phase 2B.1 — The Real Ranran**。在保留原有程序化角色的同时，项目已验证 `MMD PMX → Blender → GLB → Three.js` 的本地私有角色工作流。
+
+受模型使用规则约束，PMX、原始纹理、BLEND、GLB 与本地模型截图均不会进入公开仓库或静态构建。浏览器通过 File API 直接读取用户选择的 GLB，文件不会上传，也不需要放入 `public/`。
 
 ## 技术栈
 
@@ -10,10 +12,9 @@
 - JavaScript（ES Modules）
 - Three.js
 - OrbitControls
-- GLTFLoader（为后续 GLB 角色替换预留）
+- GLTFLoader（本地 GLB 选择、加载和回退）
+- Blender 5.2.3 LTS + MMD Tools 4.5.14
 - Playwright（本地视觉验收截图）
-
-本阶段未使用 Blender。嘉然模型由 Three.js 在运行时程序化生成。
 
 ## 本地运行
 
@@ -44,6 +45,24 @@ npm run qa:screenshots
 
 截图输出到 `artifacts/screenshots/`。脚本使用独立的无头 Chrome，不会操作用户现有的浏览器窗口。
 
+## 使用本地 GLB
+
+1. 启动项目后点击底部的「本地 GLB」。
+2. 选择 `assets-local/character-export/jiaran-test.glb` 或其他包含纹理的 GLB。
+3. 页面只会在解析成功后替换角色；失败时保留程序化角色并显示错误。
+4. 点击「程序角色」可随时恢复原角色。
+
+模型会按包围盒进行**统一比例缩放**、水平居中和脚底落地，不改变原本身体比例。透明发片、阴影和 MMD 的柔和环境项会在 Three.js 侧做轻量适配。
+
+本地模型自动验收（默认读取私有测试 GLB，也可传入其他路径）：
+
+```bash
+npm run qa:local-model
+node scripts/capture-local-model.mjs "D:\\path\\to\\model.glb"
+```
+
+输出位于 `artifacts/local-model-qa/threejs/`，该目录已被 Git 忽略。
+
 ## 摄像机操作
 
 - 鼠标左键拖动：旋转镜头
@@ -59,12 +78,21 @@ npm run qa:screenshots
 
 ```text
 .
-├─ artifacts/screenshots/        # Phase 2A 当前截图与 Phase 1.5 基线
+├─ assets-local/                 # 私有模型与派生文件（完全忽略）
+├─ artifacts/
+│  ├─ screenshots/              # 程序化角色公开 QA
+│  └─ local-model-qa/           # 私有模型 QA（忽略）
 ├─ scripts/
-│  └─ capture-screenshots.mjs    # Playwright 六视图截图与比例测量
+│  ├─ capture-screenshots.mjs
+│  └─ capture-local-model.mjs
+├─ tools/blender/
+│  ├─ import_jiaran.py
+│  ├─ render_jiaran_qa.py
+│  └─ export_jiaran_glb.py
 ├─ src/
 │  ├─ character/
-│  │  ├─ createRanran.js         # 嘉然模型、姿态、服装与 GLB 入口
+│  │  ├─ createCharacterManager.js # procedural / local-glb 切换
+│  │  ├─ createRanran.js         # 程序化嘉然模型
 │  │  ├─ geometry.js             # 曲线、胶囊与定制几何工具
 │  │  └─ materials.js            # Toon 材质与角色色板
 │  ├─ core/
@@ -98,25 +126,45 @@ npm run qa:screenshots
 
 模型没有骨骼动画，仅有幅度很小的呼吸和头部摆动。角色模块不依赖草地或场景代码，可以单独升级。
 
-## 替换为 GLB 角色
+## Blender 私有工作流
 
-`src/character/createRanran.js` 已提供 `loadRanranGLB(url)`。后续替换流程：
+以下输出必须留在 `assets-local/`；脚本不会覆盖原始 PMX。
 
-1. 将模型保存为 `public/models/ranran.glb`；
-2. 保持模型脚底位于局部坐标原点，并面向场景的 `+Z` 方向；
-3. 在 `src/main.js` 中改为导入 `loadRanranGLB`；
-4. 使用顶层 `await loadRanranGLB('/models/ranran.glb')` 替代 `createProceduralRanran()`；
-5. 继续把返回的 `THREE.Group` 添加到场景，不需要修改草地、灯光或摄像机模块；
-6. 若 GLB 包含骨骼动画，可在人物模块内部创建 `AnimationMixer`，并继续通过 `userData.update` 接入现有渲染循环。
+```text
+# 1. 导入、检查、保存原始工作副本
+blender --background --python tools/blender/import_jiaran.py -- \
+  --pmx <JiaRan.pmx> \
+  --blend assets-local/character-working/jiaran-original-import.blend \
+  --report assets-local/character-working/jiaran-import-report.json
+
+# 2. Blender 正侧背与面部渲染
+blender assets-local/character-working/jiaran-original-import.blend --background \
+  --python tools/blender/render_jiaran_qa.py -- \
+  --output artifacts/local-model-qa/blender
+
+# 3. 在独立副本中转换 glTF 材质并导出 GLB
+blender assets-local/character-working/jiaran-original-import.blend --background \
+  --python tools/blender/export_jiaran_glb.py -- \
+  --blend assets-local/character-working/jiaran-gltf-prep.blend \
+  --glb assets-local/character-export/jiaran-test.glb \
+  --report assets-local/character-export/jiaran-export-report.json
+```
+
+当前实测导入数据：146,387 顶点、264,714 面、17 个角色材质槽、1 个 Armature、583 根 Blender 骨骼、31 个导入 Shape Key（不含 Basis）及 19 张已解析图像，缺失纹理为 0。MMD 物理辅助对象不会进入 GLB。
+
+## 资产边界
+
+`.gitignore` 明确排除整个 `assets-local/` 和 `artifacts/local-model-qa/`。不要把受限 PMX、纹理、BLEND、GLB 或可还原模型的数据复制到 `public/`、提交到 GitHub 或用于商业发布。仓库只保留转换脚本、加载代码、工具配置和不包含模型数据的文档。
 
 ## 开发检查
 
 ```bash
 npm run build
 npm run qa:screenshots
+npm run qa:local-model
 ```
 
-验收镜头通过开发 API `window.__RANRAN_MEADOW__.setCameraPreset()` 固定，截图前会关闭自动巡游，保证多次运行结果稳定。`measureCharacter()` 会在 QA 中输出模型高度、头部高度和实测头身比例。
+验收镜头通过开发 API `window.__RANRAN_MEADOW__.setCameraPreset()` 固定，截图前会关闭自动巡游，保证多次运行结果稳定。`measureCharacter()` 会输出当前角色模式、包围盒高度与本地 GLB 的网格/骨骼/Morph 统计。
 
 当前截图保存在 `artifacts/screenshots/`，其中包含额外的 `character-face-closeup.png`。Phase 1.5 的原始五张截图保存在 `artifacts/screenshots/baseline-phase1.5/`，不会被 QA 脚本覆盖。
 

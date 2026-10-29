@@ -44,7 +44,7 @@ async function openScene(page, preset, qaMode = false) {
   page.on('pageerror', (error) => browserErrors.push(`pageerror: ${error.message}`));
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.__RANRAN_MEADOW__?.ranran, null, { timeout: 20_000 });
-  await page.waitForSelector('#loading-screen.hidden');
+  await page.waitForSelector('#loading-screen.hidden', { state: 'attached' });
   await page.evaluate(({ presetName, characterMode }) => {
     document.body.dataset.qa = characterMode ? 'character' : '';
     document.querySelector('#loading-screen').style.display = 'none';

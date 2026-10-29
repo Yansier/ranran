@@ -39,7 +39,17 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12M6 20a3 2 0 1 0 0-4 3 2 0 1 0 0 4Zm10-2a3 2 0 1 0 0-4 3 2 0 1 0 0 4Z"/></svg>
           <span>草原风声</span>
         </button>
+        <button id="load-local-model" type="button" aria-label="选择本地 GLB 角色" title="仅在浏览器本地读取 GLB，不会上传">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h6l2-2h9v13h-17zM12 10v6m-3-3h6"/></svg>
+          <span>本地 GLB</span>
+        </button>
+        <button id="use-procedural-model" type="button" aria-label="切回程序化角色" title="切回程序化角色" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2A8 8 0 1 1 4.1 9M4 4v5h5"/></svg>
+          <span>程序角色</span>
+        </button>
       </nav>
+      <input id="local-model-input" type="file" accept=".glb,model/gltf-binary" hidden />
+      <div id="model-status" class="model-status" role="status" aria-live="polite" hidden></div>
 
       <div class="interaction-hint">
         <span class="mouse-icon"><i></i></span>

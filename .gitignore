@@ -20,3 +20,7 @@ Thumbs.db
 # Playwright transient output (curated screenshots in artifacts are retained)
 test-results/
 playwright-report/
+
+# Copyright-restricted local character assets and private QA output
+assets-local/
+artifacts/local-model-qa/
