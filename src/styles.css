@@ -65,8 +65,7 @@ button { font: inherit; }
   .hero-title { top: 25px; left: 22px; }
   .hero-title h1 { font-size: 38px; }
   .hero-title p { margin-top: 13px; font-size: 10px; }
-  .character-note { top: 55%; right: 16px; }
-  .character-note::before { width: 25px; }
+  .character-note { display: none; }
   .scene-controls { left: 50%; transform: translateX(-50%); bottom: 18px; }
   .scene-controls button { padding: 0 11px; }
   .scene-controls button span, .interaction-hint, .phase-badge { display: none; }
@@ -75,3 +74,9 @@ button { font: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .mouse-icon i, .loader-flower { animation: none; }
 }
+
+body[data-qa='character'] .hero-title,
+body[data-qa='character'] .character-note,
+body[data-qa='character'] .scene-controls,
+body[data-qa='character'] .interaction-hint,
+body[data-qa='character'] .phase-badge { display: none !important; }

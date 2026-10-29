@@ -20,7 +20,7 @@ export const palette = {
   skin: toon(0xffd9c8),
   skinShade: toon(0xefbba8),
   hair: toon(0xb97e5e),
-  hairLight: toon(0xd6a17d),
+  hairLight: toon(0xc8916d),
   hairDark: toon(0x7f4f3f),
   pink: toon(0xf38fad),
   pinkLight: toon(0xffbed0),

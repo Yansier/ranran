@@ -11,7 +11,8 @@ function wingGeometry(sign) {
 export function createMagicButterfly() {
   const root = new THREE.Group();
   root.name = 'MagicButterfly';
-  root.position.set(-0.67, 3.22, 1.38);
+  root.position.set(-0.88, 3.4, 1.44);
+  root.scale.setScalar(0.68);
   const coreMat = new THREE.MeshBasicMaterial({ color: 0x79eaff, toneMapped: false });
   const wingMat = new THREE.MeshBasicMaterial({ color: 0x83cbff, transparent: true, opacity: 0.8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.1, 4, 8), coreMat);
@@ -29,13 +30,13 @@ export function createMagicButterfly() {
   glow.scale.set(0.75, 0.75, 0.75);
   root.add(glow);
 
-  root.userData.update = (time) => {
-    const flap = Math.sin(time * 11) * 0.72;
+  root.userData.update = (time, motionScale = 1) => {
+    const flap = Math.sin(time * (motionScale > 0.5 ? 11 : 3.5)) * 0.72 * Math.max(motionScale, 0.25);
     leftPivot.rotation.y = flap;
     rightPivot.rotation.y = -flap;
-    root.position.y = 3.22 + Math.sin(time * 2.1) * 0.09;
-    root.position.x = -0.67 + Math.sin(time * 1.15) * 0.07;
-    root.rotation.y = Math.sin(time * 0.65) * 0.22;
+    root.position.y = 3.4 + Math.sin(time * 2.1) * 0.09 * motionScale;
+    root.position.x = -0.88 + Math.sin(time * 1.15) * 0.07 * motionScale;
+    root.rotation.y = Math.sin(time * 0.65) * 0.22 * motionScale;
   };
   return root;
 }
@@ -57,6 +58,7 @@ function makeGlowTexture() {
 
 export function createFireflies(count = 42) {
   const positions = new Float32Array(count * 3);
+  const baseY = new Float32Array(count);
   const phases = new Float32Array(count);
   let seed = 1941;
   const random = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
@@ -65,6 +67,7 @@ export function createFireflies(count = 42) {
     const radius = 1.4 + random() * 6.5;
     positions[i * 3] = Math.cos(angle) * radius;
     positions[i * 3 + 1] = 0.35 + random() * 2.2;
+    baseY[i] = positions[i * 3 + 1];
     positions[i * 3 + 2] = Math.sin(angle) * radius;
     phases[i] = random() * Math.PI * 2;
   }
@@ -72,9 +75,11 @@ export function createFireflies(count = 42) {
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   const material = new THREE.PointsMaterial({ color: 0xffedb0, size: 0.07, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
   const points = new THREE.Points(geometry, material);
-  points.userData.update = (time) => {
+  points.userData.update = (time, motionScale = 1) => {
     const pos = geometry.attributes.position;
-    for (let i = 0; i < count; i += 1) pos.array[i * 3 + 1] += Math.sin(time * 1.2 + phases[i]) * 0.0008;
+    for (let i = 0; i < count; i += 1) {
+      pos.array[i * 3 + 1] = baseY[i] + Math.sin(time * 1.2 + phases[i]) * 0.035 * motionScale;
+    }
     pos.needsUpdate = true;
     material.opacity = 0.55 + Math.sin(time * 1.7) * 0.18;
   };

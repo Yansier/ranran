@@ -43,8 +43,8 @@ function createFace() {
   head.castShadow = true;
   face.add(head);
 
-  add(face, createEye(-1), V(-0.205, 0.06, 0.421), [0, -0.05, 0]);
-  add(face, createEye(1), V(0.205, 0.06, 0.421), [0, 0.05, 0]);
+  add(face, createEye(-1), V(-0.205, 0.06, 0.405), [0, -0.05, 0]);
+  add(face, createEye(1), V(0.205, 0.06, 0.405), [0, 0.05, 0]);
 
   add(face, ellipsoid(V(0.025, 0.018, 0.018), m.skinShade, 12), V(0.006, -0.075, 0.472));
   const mouth = curveLine([V(-0.055, -0.16, 0.461), V(0, -0.183, 0.477), V(0.062, -0.145, 0.458)], 0.008, m.pinkDark);
@@ -95,14 +95,14 @@ function createHair() {
 
   // Five irregular bangs overlap the cap rather than forming a helmet edge.
   const bangs = [
-    [-0.36, -0.2, -0.34], [-0.18, -0.06, -0.16], [0.01, 0.04, 0.02], [0.2, 0.04, 0.19], [0.38, -0.16, 0.34]
+    [-0.36, -0.23, -0.32], [-0.18, -0.08, -0.14], [0.01, 0.04, 0.03], [0.2, 0.09, 0.19], [0.38, 0.2, 0.33]
   ];
   bangs.forEach(([start, mid, end], i) => {
     hair.add(taperedCurve([
       V(start, 0.48 - Math.abs(start) * 0.12, 0.37),
       V(mid, 0.26, 0.49),
-      V(end, -0.16 - Math.abs(start) * 0.12, 0.47)
-    ], i === 2 ? 0.13 : 0.12, i % 2 ? m.hair : m.hairLight, 0.08, 1.28));
+      V(end, 0.035 - Math.abs(start) * 0.08, 0.47)
+    ], i === 2 ? 0.09 : 0.082, i % 2 ? m.hair : m.hairLight, 0.06, 1.2));
   });
 
   // Ahoge: a single curved tapered strand.
@@ -190,7 +190,7 @@ function createArm(start, elbow, wrist, isReaching) {
   cuff.quaternion.setFromUnitVectors(V(0, 1, 0), direction);
   arm.add(cuff);
   arm.add(taperedCurve([sleeveEnd, elbow, wrist], 0.105, m.skin, 0.86, 0.94));
-  const hand = ellipsoid(V(0.12, 0.16, 0.085), m.skin, 18);
+  const hand = ellipsoid(V(0.098, 0.135, 0.073), m.skin, 18);
   hand.position.copy(wrist);
   hand.rotation.z = isReaching ? -0.45 : 0.3;
   arm.add(hand);
@@ -267,6 +267,7 @@ export function createProceduralRanran() {
   const headRoot = new THREE.Group();
   headRoot.position.set(-0.04, 3.18, 0.15);
   headRoot.rotation.set(-0.06, -0.13, -0.075);
+  headRoot.scale.set(0.83, 0.88, 0.86);
   headRoot.add(createFace(), createHair());
   character.add(headRoot);
 
@@ -292,10 +293,10 @@ export function createProceduralRanran() {
       obj.receiveShadow = false;
     }
   });
-  character.userData.update = (time) => {
+  character.userData.update = (time, motionScale = 1) => {
     // Almost imperceptible breathing/hair movement keeps the static pose alive.
-    torsoRoot.position.y = 2.37 + Math.sin(time * 1.35) * 0.008;
-    headRoot.rotation.z = -0.075 + Math.sin(time * 0.75) * 0.008;
+    torsoRoot.position.y = 2.37 + Math.sin(time * 1.35) * 0.008 * motionScale;
+    headRoot.rotation.z = -0.075 + Math.sin(time * 0.75) * 0.008 * motionScale;
   };
   return character;
 }
