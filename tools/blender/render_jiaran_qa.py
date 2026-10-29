@@ -135,15 +135,26 @@ def main() -> None:
     for filename, (location, target) in views.items():
         render_view(output, filename, camera, location, target)
 
+    three_quarter_location = Vector((center.x - distance * 0.62, minimum.y - distance * 0.86, center.z + size.z * 0.08))
+    render_view(output, "blender-three-quarter.png", camera, three_quarter_location, center)
+
     face_target = Vector((center.x, minimum.y, maximum.z - size.z * 0.16))
     face_location = Vector((center.x, minimum.y - size.z * 0.72, face_target.z + size.z * 0.01))
     camera.data.lens = 68
     render_view(output, "blender-face.png", camera, face_location, face_target, square=True)
 
+    armature = next((obj for obj in bpy.data.objects if obj.type == "ARMATURE"), None)
+    wrist = armature.pose.bones.get("右手首") if armature else None
+    if wrist:
+        hand_target = armature.matrix_world @ wrist.head
+        hand_location = hand_target + Vector((-size.z * 0.04, -size.z * 0.46, size.z * 0.04))
+        camera.data.lens = 78
+        render_view(output, "blender-hand.png", camera, hand_location, hand_target, square=True)
+
     report = {
         "character_mesh": character.name,
         "render_engine": bpy.context.scene.render.engine,
-        "views": sorted(views.keys()) + ["blender-face.png"],
+        "views": sorted(views.keys()) + ["blender-three-quarter.png", "blender-face.png", "blender-hand.png"],
         "bounds": {"min": list(minimum), "max": list(maximum), "size": list(size)},
     }
     (output / "blender-render-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

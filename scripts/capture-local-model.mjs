@@ -6,7 +6,7 @@ import { chromium } from 'playwright';
 
 const root = process.cwd();
 const glbPath = path.resolve(process.argv[2] || path.join(root, 'assets-local', 'character-export', 'jiaran-test.glb'));
-const outputDir = path.join(root, 'artifacts', 'local-model-qa', 'threejs');
+const outputDir = path.resolve(process.argv[3] || path.join(root, 'artifacts', 'local-model-qa', 'threejs'));
 const port = 4181;
 const baseUrl = `http://127.0.0.1:${port}`;
 const vitePath = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
@@ -48,7 +48,7 @@ async function openWithLocalModel(page) {
   await page.waitForFunction(() => window.__RANRAN_MEADOW__?.characterManager);
   await page.setInputFiles('#local-model-input', glbPath);
   await page.waitForFunction(() => window.__RANRAN_MEADOW__.characterManager.mode === 'local-glb', null, { timeout: 45_000 });
-  await page.waitForSelector('#model-status[data-state="success"]');
+  await page.waitForFunction(() => ['success', 'warning'].includes(document.querySelector('#model-status')?.dataset.state));
   await page.evaluate(() => {
     document.querySelector('#loading-screen').style.display = 'none';
     window.__RANRAN_MEADOW__.controls.autoRotate = false;
@@ -83,18 +83,23 @@ try {
   const page = await desktop.newPage();
   await openWithLocalModel(page);
   await capture(page, 'meadow-hero.png', 'hero', false);
+  await capture(page, 'character-interaction.png', 'interaction');
   await page.setViewportSize({ width: 900, height: 900 });
   await capture(page, 'character-front.png', 'front');
   await capture(page, 'character-side.png', 'side');
   await capture(page, 'character-back.png', 'back');
   await capture(page, 'character-face.png', 'face');
   const metrics = await page.evaluate(() => window.__RANRAN_MEADOW__.measureCharacter());
+  if (path.basename(glbPath).includes('first-gesture') && !metrics.poseApplied) {
+    throw new Error('First Gesture GLB loaded, but its static pose clip was not applied.');
+  }
   await desktop.close();
 
   const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   const mobilePage = await mobile.newPage();
   await openWithLocalModel(mobilePage);
-  await capture(mobilePage, 'meadow-mobile.png', 'mobile', false);
+  const mobilePreset = await mobilePage.evaluate(() => window.__RANRAN_MEADOW__.characterManager.measure().poseApplied ? 'mobileGesture' : 'mobile');
+  await capture(mobilePage, 'meadow-mobile.png', mobilePreset, false);
   await mobile.close();
 
   const report = {
@@ -103,6 +108,7 @@ try {
     browserErrors: [...new Set(browserErrors)],
     screenshots: [
       'meadow-hero.png',
+      'character-interaction.png',
       'character-front.png',
       'character-side.png',
       'character-back.png',

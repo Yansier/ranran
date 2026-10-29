@@ -51,6 +51,8 @@ function setCameraPreset(name = 'hero') {
     side: { position: [9.4, 2.8, 0.05], target: [0, 2.4, 0.05] },
     back: { position: [0, 2.8, -9.4], target: [0, 2.4, -0.05] },
     face: { position: [0, 4.05, 3.7], target: [-0.04, 4.0, 0.12] },
+    interaction: { position: [5.9, 4.5, 8.4], target: [-0.28, 2.55, 0.35] },
+    mobileGesture: { position: [4.9, 5.35, 12.4], target: [-0.55, 2.45, 0.35] },
     mobile: { position: [4.4, 5.25, 10.8], target: [-0.25, 2.45, 0.08] }
   };
   const preset = presets[name] || presets.hero;
@@ -80,10 +82,14 @@ async function loadLocalModel(file) {
   localModelButton.disabled = true;
   try {
     const details = await characterManager.loadLocalGLB(file);
+    if (details.poseApplied && details.butterflyTarget) butterfly.userData.setTarget(details.butterflyTarget);
+    else butterfly.userData.resetTarget();
     proceduralButton.hidden = false;
-    document.querySelector('.character-note small').textContent = '本地模型 · 站立预览';
-    showModelStatus(`本地模型已载入 · ${details.meshCount} 个网格`, 'success');
-    setCameraPreset('front');
+    document.querySelector('.character-note small').textContent = details.poseApplied ? '向魔法蝴蝶伸出了手' : '本地模型 · 站立预览';
+    const poseLabel = details.poseApplied ? '姿势已固定' : details.poseStatus;
+    showModelStatus(`本地模型已载入 · ${poseLabel}`, details.poseApplied ? 'success' : 'warning');
+    const isMobile = window.matchMedia('(max-width: 720px)').matches;
+    setCameraPreset(details.poseApplied ? (isMobile ? 'mobileGesture' : 'interaction') : 'front');
     return details;
   } catch (error) {
     console.error('Local GLB load failed:', error);
@@ -112,6 +118,7 @@ localModelInput.addEventListener('change', () => {
 });
 proceduralButton.addEventListener('click', () => {
   characterManager.useProcedural();
+  butterfly.userData.resetTarget();
   proceduralButton.hidden = true;
   document.querySelector('.character-note small').textContent = '正在追逐魔法蝴蝶';
   showModelStatus('已切回程序化角色', 'ready');

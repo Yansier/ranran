@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "qa:screenshots": "node scripts/capture-screenshots.mjs",
-    "qa:local-model": "node scripts/capture-local-model.mjs"
+    "qa:local-model": "node scripts/capture-local-model.mjs",
+    "qa:first-gesture": "node scripts/capture-local-model.mjs assets-local/character-export/jiaran-first-gesture.glb artifacts/local-model-qa/first-gesture/threejs"
   },
   "dependencies": {
     "three": "^0.165.0"

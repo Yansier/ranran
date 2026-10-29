@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createProceduralRanran } from './createRanran.js';
 
 const TARGET_CHARACTER_HEIGHT = 4.7;
+const FIRST_GESTURE_CLIP = 'Ranran_FirstGesture_Pose';
 
 function disposeObject(root) {
   root.traverse((object) => {
@@ -94,6 +95,59 @@ function prepareImportedScene(root) {
   };
 }
 
+function applyStaticPose(root, animations) {
+  const animationNames = animations.map((clip) => clip.name);
+  const clip = animations.find((candidate) => candidate.name.includes(FIRST_GESTURE_CLIP));
+  if (!clip) {
+    return {
+      poseApplied: false,
+      poseClip: null,
+      poseStatus: animations.length ? `未找到 ${FIRST_GESTURE_CLIP}` : 'GLB 未包含姿势片段',
+      animationNames
+    };
+  }
+
+  const mixer = new THREE.AnimationMixer(root);
+  const action = mixer.clipAction(clip);
+  action.reset();
+  action.setLoop(THREE.LoopOnce, 1);
+  action.clampWhenFinished = true;
+  action.enabled = true;
+  action.setEffectiveWeight(1);
+  action.play();
+  mixer.setTime(0);
+  mixer.update(0);
+  action.paused = true;
+  root.updateWorldMatrix(true, true);
+  root.userData.staticPose = { mixer, action, clip };
+  return {
+    poseApplied: true,
+    poseClip: clip.name,
+    poseStatus: '静态姿势已应用并保持',
+    animationNames
+  };
+}
+
+function interactionAnchor(root) {
+  const wrist = root.getObjectByName('右手首');
+  const fingertip = root.getObjectByName('右中指先') || root.getObjectByName('右手首先');
+  if (!wrist || !fingertip) return null;
+  root.updateWorldMatrix(true, true);
+  const wristPosition = wrist.getWorldPosition(new THREE.Vector3());
+  const tipPosition = fingertip.getWorldPosition(new THREE.Vector3());
+  const direction = tipPosition.clone().sub(wristPosition);
+  if (direction.lengthSq() < 1e-6) return null;
+  direction.normalize();
+  const butterflyTarget = tipPosition.clone()
+    .addScaledVector(direction, 0.52)
+    .add(new THREE.Vector3(0, 0.17, 0.04));
+  return {
+    wristPosition: wristPosition.toArray(),
+    fingertipPosition: tipPosition.toArray(),
+    butterflyTarget: butterflyTarget.toArray()
+  };
+}
+
 export function createCharacterManager() {
   const root = new THREE.Group();
   root.name = 'Ranran_CharacterSlot';
@@ -122,7 +176,9 @@ export function createCharacterManager() {
       const imported = gltf.scene;
       imported.name = 'Ranran_LocalGLB';
       imported.userData.characterSource = 'local-glb';
+      const poseDetails = applyStaticPose(imported, gltf.animations);
       const importedDetails = prepareImportedScene(imported);
+      Object.assign(importedDetails, poseDetails, interactionAnchor(imported) ?? {});
       importedDetails.fileName = file.name;
       importedDetails.fileBytes = file.size;
       importedDetails.animationCount = gltf.animations.length;

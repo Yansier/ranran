@@ -2,7 +2,7 @@
 
 一个以虚拟偶像「嘉然」为主角的浏览器 3D 童话草原。项目采用动漫风格的柔和 Toon Shading，让嘉然在花草与遗迹之间追逐一只发光的魔法蝴蝶。
 
-当前版本为 **Phase 2B.1 — The Real Ranran**。在保留原有程序化角色的同时，项目已验证 `MMD PMX → Blender → GLB → Three.js` 的本地私有角色工作流。
+当前版本为 **Phase 2B.2 — First Gesture**。在保留原有程序化角色与站立 GLB 的同时，项目已通过 `MMD PMX → Blender Action → GLB AnimationClip → Three.js AnimationMixer`，让本地嘉然模型以静态姿势向魔法蝴蝶伸手。
 
 受模型使用规则约束，PMX、原始纹理、BLEND、GLB 与本地模型截图均不会进入公开仓库或静态构建。浏览器通过 File API 直接读取用户选择的 GLB，文件不会上传，也不需要放入 `public/`。
 
@@ -59,9 +59,14 @@ npm run qa:screenshots
 ```bash
 npm run qa:local-model
 node scripts/capture-local-model.mjs "D:\\path\\to\\model.glb"
+npm run qa:first-gesture
 ```
 
 输出位于 `artifacts/local-model-qa/threejs/`，该目录已被 Git 忽略。
+
+`jiaran-first-gesture.glb` 内含两帧完全一致的 `Ranran_FirstGesture_Pose`。加载器会精确查找该片段，通过 `AnimationMixer` 应用首帧后暂停保持，不循环播放。没有该片段的旧 GLB 仍会正常加载，并在界面明确显示“GLB 未包含姿势片段”。
+
+姿势模型加载后，程序会读取 `右手首` 与 `右中指先` 的 Three.js 世界坐标，把蝴蝶放到手指延伸方向之外并保留安全间隙；切回程序化角色时恢复原始蝴蝶位置。
 
 ## 摄像机操作
 
@@ -87,6 +92,8 @@ node scripts/capture-local-model.mjs "D:\\path\\to\\model.glb"
 │  └─ capture-local-model.mjs
 ├─ tools/blender/
 │  ├─ import_jiaran.py
+│  ├─ inspect_jiaran_rig.py
+│  ├─ pose_jiaran_first_gesture.py
 │  ├─ render_jiaran_qa.py
 │  └─ export_jiaran_glb.py
 ├─ src/
@@ -152,6 +159,14 @@ blender assets-local/character-working/jiaran-original-import.blend --background
 
 当前实测导入数据：146,387 顶点、264,714 面、17 个角色材质槽、1 个 Armature、583 根 Blender 骨骼、31 个导入 Shape Key（不含 Basis）及 19 张已解析图像，缺失纹理为 0。MMD 物理辅助对象不会进入 GLB。
 
+First Gesture 使用非破坏性 Action，不执行 Apply Pose as Rest Pose。正式文件为：
+
+- `assets-local/character-working/jiaran-first-gesture.blend`
+- `assets-local/character-export/jiaran-first-gesture.glb`
+- `artifacts/local-model-qa/first-gesture/`
+
+姿势主要修改右腕、右肘、右手首，放松左臂，轻微调整上半身、颈部、头部、右足 IK，并为右手指节添加小幅弯曲。头发与裙摆骨骼保持原样，避免不必要地扰动329根裙摆骨和64根头发骨。
+
 ## 资产边界
 
 `.gitignore` 明确排除整个 `assets-local/` 和 `artifacts/local-model-qa/`。不要把受限 PMX、纹理、BLEND、GLB 或可还原模型的数据复制到 `public/`、提交到 GitHub 或用于商业发布。仓库只保留转换脚本、加载代码、工具配置和不包含模型数据的文档。
@@ -162,6 +177,7 @@ blender assets-local/character-working/jiaran-original-import.blend --background
 npm run build
 npm run qa:screenshots
 npm run qa:local-model
+npm run qa:first-gesture
 ```
 
 验收镜头通过开发 API `window.__RANRAN_MEADOW__.setCameraPreset()` 固定，截图前会关闭自动巡游，保证多次运行结果稳定。`measureCharacter()` 会输出当前角色模式、包围盒高度与本地 GLB 的网格/骨骼/Morph 统计。

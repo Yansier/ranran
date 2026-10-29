@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--blend", required=True, help="Private derived .blend path")
     parser.add_argument("--glb", required=True, help="Private output .glb path")
     parser.add_argument("--report", required=True, help="JSON report path")
+    parser.add_argument("--action", default="", help="Optional static pose Action to export")
     return parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else [])
 
 
@@ -139,6 +140,18 @@ def supported_export_kwargs(**requested: object) -> dict:
     return {key: value for key, value in requested.items() if key in properties}
 
 
+def supported_animation_mode() -> str | None:
+    properties = bpy.ops.export_scene.gltf.get_rna_type().properties
+    prop = properties.get("export_animation_mode")
+    if prop is None:
+        return None
+    choices = {item.identifier for item in prop.enum_items}
+    for candidate in ("ACTIONS", "ACTIVE_ACTIONS", "NLA_TRACKS"):
+        if candidate in choices:
+            return candidate
+    return None
+
+
 def main() -> None:
     args = parse_args()
     derived_blend = Path(args.blend).resolve()
@@ -150,6 +163,19 @@ def main() -> None:
 
     character = find_character_mesh()
     armature = find_armature(character)
+
+    action = None
+    if args.action:
+        action = bpy.data.actions.get(args.action)
+        if action is None:
+            raise RuntimeError(f"Requested Action not found: {args.action}")
+        if armature.animation_data is None:
+            armature.animation_data_create()
+        armature.animation_data.action = action
+        bpy.context.scene.frame_start = int(action.frame_range[0])
+        bpy.context.scene.frame_end = int(action.frame_range[1])
+        bpy.context.scene.frame_set(int(action.frame_range[0]))
+        bpy.context.view_layer.update()
 
     texture_mapping = convert_materials_for_gltf(character)
 
@@ -176,7 +202,10 @@ def main() -> None:
         export_morph=True,
         export_morph_normal=True,
         export_morph_tangent=False,
-        export_animations=False,
+        export_animations=bool(action),
+        export_frame_range=bool(action),
+        export_force_sampling=bool(action),
+        export_nla_strips=False,
         export_cameras=False,
         export_lights=False,
         export_yup=True,
@@ -186,6 +215,9 @@ def main() -> None:
         export_all_influences=False,
         export_try_sparse_sk=True,
     )
+    animation_mode = supported_animation_mode()
+    if action and animation_mode:
+        kwargs["export_animation_mode"] = animation_mode
     result = bpy.ops.export_scene.gltf(**kwargs)
     if "FINISHED" not in result:
         raise RuntimeError(f"glTF export did not finish: {result}")
@@ -206,6 +238,9 @@ def main() -> None:
         "shape_keys": len(shape_keys),
         "shape_key_names": [key.name for key in shape_keys],
         "selected_objects": [obj.name for obj in bpy.context.selected_objects],
+        "action": action.name if action else None,
+        "action_frame_range": list(action.frame_range) if action else None,
+        "animation_mode": animation_mode if action else None,
         "base_texture_mapping": texture_mapping,
         "export_options": kwargs,
         "materials": material_summary(character),

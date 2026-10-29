@@ -11,7 +11,9 @@ function wingGeometry(sign) {
 export function createMagicButterfly() {
   const root = new THREE.Group();
   root.name = 'MagicButterfly';
-  root.position.set(-0.96, 3.87, 1.5);
+  const defaultPosition = new THREE.Vector3(-0.96, 3.87, 1.5);
+  const basePosition = defaultPosition.clone();
+  root.position.copy(basePosition);
   root.scale.setScalar(0.68);
   const coreMat = new THREE.MeshBasicMaterial({ color: 0x79eaff, toneMapped: false });
   const wingMat = new THREE.MeshBasicMaterial({ color: 0x83cbff, transparent: true, opacity: 0.8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
@@ -34,9 +36,18 @@ export function createMagicButterfly() {
     const flap = Math.sin(time * (motionScale > 0.5 ? 11 : 3.5)) * 0.72 * Math.max(motionScale, 0.25);
     leftPivot.rotation.y = flap;
     rightPivot.rotation.y = -flap;
-    root.position.y = 3.87 + Math.sin(time * 2.1) * 0.09 * motionScale;
-    root.position.x = -0.96 + Math.sin(time * 1.15) * 0.07 * motionScale;
+    root.position.y = basePosition.y + Math.sin(time * 2.1) * 0.09 * motionScale;
+    root.position.x = basePosition.x + Math.sin(time * 1.15) * 0.07 * motionScale;
+    root.position.z = basePosition.z;
     root.rotation.y = Math.sin(time * 0.65) * 0.22 * motionScale;
+  };
+  root.userData.setTarget = (target) => {
+    basePosition.fromArray(Array.isArray(target) ? target : target.toArray());
+    root.position.copy(basePosition);
+  };
+  root.userData.resetTarget = () => {
+    basePosition.copy(defaultPosition);
+    root.position.copy(basePosition);
   };
   return root;
 }
